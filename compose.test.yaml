@@ -1,0 +1,67 @@
+name: nosql-ensiie-tests
+
+services:
+  tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    environment:
+      RUN_LIVE_STORAGE_TESTS: "1"
+      MONGO_HOST: mongodb
+      MONGO_DATABASE: nosql_backend_tests
+      MONGO_USERNAME: test
+      MONGO_PASSWORD: test-only-mongo
+      REDIS_HOST: redis
+      REDIS_PASSWORD: test-only-redis
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mongodb_test
+      - redis_test
+
+  mongodb:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: test
+      MONGO_INITDB_ROOT_PASSWORD: test-only-mongo
+    networks:
+      - mongodb_test
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --username
+        - test
+        - --password
+        - test-only-mongo
+        - --authenticationDatabase
+        - admin
+        - --eval
+        - "quit(db.adminCommand({ping: 1}).ok ? 0 : 1)"
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "test-only-redis"]
+    environment:
+      REDISCLI_AUTH: test-only-redis
+    networks:
+      - redis_test
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+networks:
+  mongodb_test:
+    internal: true
+  redis_test:
+    internal: true
