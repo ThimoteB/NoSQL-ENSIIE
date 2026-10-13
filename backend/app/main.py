@@ -5,7 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pymongo.errors import PyMongoError
 from redis.exceptions import RedisError
 
@@ -21,6 +21,7 @@ from app.models import (
     PlayerCreate,
 )
 from app.service import DomainError, Journal, SynchronizationError
+from app.skins import SkinInfo, SkinService
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,19 @@ def create_app(storage: Storage | None = None) -> FastAPI:
         journal.storage.mongo.command("ping")
         journal.storage.redis.ping()
         return {"status": "ok"}
+
+    @application.get("/skins/{minecraft_uuid}", response_model=SkinInfo)
+    def skin_metadata(minecraft_uuid: UUID, journal: JournalDependency) -> SkinInfo:
+        info, _ = SkinService(journal.storage.redis).resolve(minecraft_uuid)
+        return info
+
+    @application.get("/skins/{minecraft_uuid}/texture", response_class=Response)
+    def skin_texture(minecraft_uuid: UUID, journal: JournalDependency) -> Response:
+        _, content = SkinService(journal.storage.redis).resolve(minecraft_uuid)
+        return Response(
+            content=content, media_type="image/png",
+            headers={"Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff"},
+        )
 
     @application.post("/players", response_model=Player, status_code=201)
     def create_player(
