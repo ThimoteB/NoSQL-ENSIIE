@@ -158,3 +158,152 @@ dans Redis avant que le backend soit prêt.
 exposition en production** : il faudra notamment activer TLS, l'authentification,
 des comptes applicatifs à droits limités et une vraie gestion des secrets.
 
+## Modèle métier
+
+Il n'y a pas d'authentification : un profil public n'est pas une identité vérifiée.
+Tout visiteur peut sélectionner un joueur existant pour déclarer une rencontre.
+
+### Collections MongoDB
+
+| Collection | Champs principaux |
+| --- | --- |
+| `players` | `_id`, `username`, `username_normalized`, `description` facultative, `minecraft_uuid` facultatif, `created_at`, `_sync_status` |
+| `species` | `_id`, `name` |
+| `biomes` | `_id`, `name` |
+| `encounters` | `_id`, `player_id`, `species_id`, `animal_nickname` facultatif, `location`, `encounter_type`, `description`, `created_at`, `_sync_status` |
+
+Les identifiants des joueurs et rencontres sont des UUID générés par le backend
+(ou la clé d'idempotence UUID fournie). Les catalogues utilisent des identifiants
+stables comme `fox` et `taiga`. Le backend vérifie l'existence des références.
+
+- Pseudo : 3 à 32 lettres ASCII, chiffres ou `_`, espaces extérieurs retirés.
+  Un index unique sur sa version en minuscules empêche `Alex` et `alex` de créer
+  deux profils différents.
+- Description du profil : facultative, 500 caractères maximum.
+- UUID Minecraft Java : facultatif, accepté avec ou sans tirets, stocké en
+  minuscules avec tirets. Il est indépendant de l'identifiant interne et n'est
+  pas unique : l'association au compte est déclarative. Seul son format est
+  vérifié à la création, pas l'existence du compte ni sa propriété. La récupération
+  du skin est une opération distincte : son échec ne bloque pas la création.
+- Une rencontre référence un joueur, une espèce et un biome. Le surnom de
+  l'animal et le nom du lieu sont facultatifs (100 caractères maximum).
+- `location` contient `biome_id` et éventuellement `label`, sans coordonnées.
+- `encounter_type` : `observation`, `approach`, `feeding` ou `taming`.
+- Le contexte `description` est obligatoire : 1 à 4 000 caractères après retrait
+  des espaces extérieurs. Les textes facultatifs vides sont considérés absents.
+- Aucune date de rencontre n'est demandée. `created_at` est la date de publication
+  générée par le serveur en UTC.
+- Les champs inconnus sont refusés. Les collections ont des validateurs MongoDB
+  stricts ; les rencontres sont indexées par date, joueur, espèce et biome.
+
+Les catalogues sont un sous-ensemble initial, extensible dans
+[`backend/app/catalogs.py`](backend/app/catalogs.py). Le backend ne vérifie pas
+les règles du jeu associant une espèce à un biome ou à un type de rencontre.
+Il n'y a pas encore de modification ni de suppression.
+
+### Structures Redis
+
+| Clé | Type | Contenu |
+| --- | --- | --- |
+| `player:{id}` | Hash | Profil complet |
+| `players:by_username` | Hash | Pseudo normalisé vers identifiant |
+| `species:{id}`, `biome:{id}` | Hash | Entrées des catalogues |
+| `species:all`, `biomes:all` | Set | Identifiants des catalogues |
+| `encounter:{id}` | Hash | Rencontre complète, lieu aplati en `biome_id` et `location_label` |
+| `encounters:recent` | Sorted set | Identifiants des rencontres, score = timestamp UTC |
+| `player:{id}:encounters` | Set | Identifiants des rencontres d'un joueur |
+| `species:{id}:encounters` | Set | Identifiants des rencontres d'une espèce |
+| `biome:{id}:encounters` | Set | Identifiants des rencontres d'un biome |
+
+Les champs facultatifs absents ne sont pas écrits. Aucune clé métier n'expire.
+Redis n'est pas seulement un cache : il conserve les données et leurs index.
+Les lectures filtrées et paginées utilisent MongoDB comme référence.
+
+## API
+
+Toutes les URL ci-dessous passent par Nginx sur `http://localhost:8080/api`.
+Le schéma OpenAPI est disponible à `/api/openapi.json`.
+
+| Méthode | Route | Usage |
+| --- | --- | --- |
+| `POST` | `/players` | Créer un profil |
+| `GET` | `/players` | Lister les profils par pseudo |
+| `GET` | `/players/{id}` | Lire un profil |
+| `GET` | `/species` | Lister les espèces |
+| `GET` | `/biomes` | Lister les biomes |
+| `GET` | `/encounter-types` | Lister les types de rencontre |
+| `POST` | `/encounters` | Déclarer une rencontre |
+| `GET` | `/encounters` | Lister et filtrer les rencontres (MongoDB) |
+| `GET` | `/encounters/{id}` | Lire une rencontre |
+| `GET` | `/health` | Vérifier les deux stockages |
+| `GET` | `/skins/{minecraft_uuid}` | Modèle classic/slim et URL de texture locale |
+| `GET` | `/skins/{minecraft_uuid}/texture` | Texture PNG validée pour le rendu 3D |
+
+Les listes de joueurs et rencontres acceptent `limit` (1 à 100, 50 par défaut)
+et `offset` (0 par défaut). Les rencontres acceptent également les filtres
+combinables `player_id`, `species_id` et `biome_id`.
+
+Créer un joueur (l'UUID Minecraft peut être omis) :
+
+```sh
+curl -i http://localhost:8080/api/players \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 11111111-1111-4111-8111-111111111111' \
+  -d '{"username":"Alex","description":"Explorateur"}'
+```
+
+Puis créer une rencontre avec l'identifiant du joueur retourné :
+
+```sh
+curl -i http://localhost:8080/api/encounters \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 22222222-2222-4222-8222-222222222222' \
+  -d '{
+    "player_id": "11111111-1111-4111-8111-111111111111",
+    "species_id": "fox",
+    "animal_nickname": "Flamme",
+    "location": {"biome_id": "taiga", "label": "Pres du campement"},
+    "encounter_type": "feeding",
+    "description": "Le renard est venu manger des baies."
+  }'
+```
+
+```sh
+curl 'http://localhost:8080/api/encounters?species_id=fox&biome_id=taiga'
+```
+
+### Double écriture et reprise
+
+MongoDB est la source de référence. Chaque création est enregistrée avec un statut
+interne `pending`, puis projetée dans Redis (hash et index regroupés avec
+`MULTI/EXEC`), avant de passer à `synced`. Les réponses publiques exposent ce statut
+sous le nom `sync_status`. Un succès HTTP 201 confirme les deux écritures.
+
+Il n'y a **pas de transaction distribuée** MongoDB/Redis. Une panne Redis après
+l'écriture MongoDB produit une erreur HTTP 503 avec `code=redis_sync_pending`,
+`persisted_in_mongodb=true` et `resource_id`. La donnée MongoDB est conservée ;
+elle peut être lue avec son statut `pending`. Une panne MongoDB ou une réponse
+d'écriture incertaine produit aussi une erreur 503, sans promettre l'absence
+d'écriture. Les erreurs de stockage sont journalisées.
+
+Le header facultatif `Idempotency-Key` doit être un UUID : le réutiliser avec
+le même corps permet de reprendre une création sans doublon, y compris après
+une panne. La même clé avec des données différentes retourne 409 ; un pseudo
+déjà pris retourne également 409. Utiliser une nouvelle clé pour chaque nouvelle
+création. Sans header, le serveur génère l'identifiant ; un nouvel essai peut
+donc créer une nouvelle rencontre. Le frontend conserve cette clé pendant les
+tentatives d'une même soumission.
+
+Pour rejouer les projections Redis sans modifier les identifiants :
+
+```sh
+docker compose exec backend python -m app.resync
+```
+
+La commande retourne les nombres d'objets traités et échoue explicitement si un
+stockage est indisponible. Elle est aussi exécutée au démarrage. Elle réécrit les
+hashes et complète les index de manière rejouable, sans vider Redis ni supprimer
+les clés étrangères au projet. Ce n'est pas un nettoyage des anciennes clés :
+les modifications/suppressions et changements de catalogue nécessiteront une
+stratégie de migration dédiée.
+
