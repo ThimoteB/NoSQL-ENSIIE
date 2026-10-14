@@ -1,0 +1,25 @@
+meta {
+  name: Filtrer par biome
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/encounters?biome_id={{biomeId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  biome_id: {{biomeId}}
+}
+
+tests {
+  test("Toutes les rencontres concernent le biome demande", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.be.an("array").that.is.not.empty;
+    res.getBody().forEach(function (entry) {
+      expect(entry.location.biome_id).to.equal(bru.getEnvVar("biomeId"));
+    });
+  });
+}

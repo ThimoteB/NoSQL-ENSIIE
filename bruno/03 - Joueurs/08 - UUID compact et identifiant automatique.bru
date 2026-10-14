@@ -1,0 +1,37 @@
+meta {
+  name: UUID compact et identifiant automatique
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "Auto_{{runId}}",
+    "minecraft_uuid": "{{compactMinecraftUuid}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("compactMinecraftUuid", bru.getEnvVar("minecraftUuid").replace(/-/g, "").toUpperCase());
+}
+
+tests {
+  test("Le serveur genere l'identifiant et normalise l'UUID Minecraft", function () {
+    expect(res.getStatus()).to.equal(201);
+    const player = res.getBody();
+    expect(player.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(player.minecraft_uuid).to.equal(bru.getEnvVar("minecraftUuid"));
+    expect(player.sync_status).to.equal("synced");
+    expect(player.id).not.to.equal(player.minecraft_uuid);
+  });
+}

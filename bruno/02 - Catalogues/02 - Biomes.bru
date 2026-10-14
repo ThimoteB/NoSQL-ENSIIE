@@ -1,0 +1,24 @@
+meta {
+  name: Lister les biomes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/biomes
+  body: none
+  auth: none
+}
+
+tests {
+  test("Le catalogue contient le biome du parcours", function () {
+    expect(res.getStatus()).to.equal(200);
+    const entries = res.getBody();
+    expect(entries).to.be.an("array").that.is.not.empty;
+    expect(entries.map(function (entry) { return entry.id; })).to.include(bru.getEnvVar("biomeId"));
+    entries.forEach(function (entry) {
+      expect(entry.id).to.be.a("string");
+      expect(entry.name).to.be.a("string").that.is.not.empty;
+    });
+  });
+}

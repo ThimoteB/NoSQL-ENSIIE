@@ -1,0 +1,33 @@
+meta {
+  name: Refuser un conflit d'idempotence rencontre
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{encounterId}}
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Un contexte different avec la meme cle."
+  }
+}
+
+tests {
+  test("Une cle existante ne permet pas de remplacer la rencontre", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().detail.code).to.equal("idempotency_conflict");
+  });
+}

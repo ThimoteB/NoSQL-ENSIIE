@@ -1,0 +1,27 @@
+meta {
+  name: Lister les rencontres recentes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/encounters?limit=100&offset=0
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+  offset: 0
+}
+
+tests {
+  test("La liste est bornee et triee par publication decroissante", function () {
+    expect(res.getStatus()).to.equal(200);
+    const encounters = res.getBody();
+    expect(encounters).to.be.an("array");
+    expect(encounters.length).to.be.at.most(100);
+    const dates = encounters.map(function (entry) { return Date.parse(entry.created_at); });
+    expect(dates).to.deep.equal(dates.slice().sort(function (a, b) { return b - a; }));
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Refuser un pseudo deja utilise
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "{{duplicateUsername}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("duplicateUsername", " " + bru.getVar("playerUsername").toUpperCase() + " ");
+}
+
+tests {
+  test("La casse et les espaces ne contournent pas l'unicite", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().detail.code).to.equal("username_exists");
+  });
+}

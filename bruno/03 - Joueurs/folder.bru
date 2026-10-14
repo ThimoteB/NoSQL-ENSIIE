@@ -1,0 +1,10 @@
+meta {
+  name: Joueurs
+  seq: 3
+}
+
+script:pre-request {
+  if (!bru.getVar("playerId")) {
+    throw new Error("Executer d'abord 01 - Systeme / 01 - Initialiser et verifier les stockages.");
+  }
+}

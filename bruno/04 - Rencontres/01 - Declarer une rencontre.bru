@@ -1,0 +1,56 @@
+meta {
+  name: Declarer une rencontre complete
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{encounterId}}
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "animal_nickname": " Flamme ",
+    "location": {
+      "biome_id": "{{biomeId}}",
+      "label": " Pres du campement "
+    },
+    "encounter_type": "feeding",
+    "description": " Le renard s'approche pour manger des baies. "
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("encounterSnapshot", JSON.stringify(res.getBody()));
+  }
+}
+
+tests {
+  test("La rencontre est validee et synchronisee", function () {
+    expect(res.getStatus()).to.equal(201);
+    const encounter = res.getBody();
+    expect(encounter.id).to.equal(bru.getVar("encounterId"));
+    expect(encounter.player_id).to.equal(bru.getVar("playerId"));
+    expect(encounter.species_id).to.equal(bru.getEnvVar("speciesId"));
+    expect(encounter.location).to.deep.equal({
+      biome_id: bru.getEnvVar("biomeId"), label: "Pres du campement"
+    });
+    expect(encounter.animal_nickname).to.equal("Flamme");
+    expect(encounter.encounter_type).to.equal("feeding");
+    expect(encounter.description).to.equal("Le renard s'approche pour manger des baies.");
+    expect(encounter.sync_status).to.equal("synced");
+    expect(encounter.created_at).to.match(/Z$/);
+    expect(encounter).not.to.have.property("encountered_at");
+    expect(encounter.location).not.to.have.property("coordinates");
+  });
+}

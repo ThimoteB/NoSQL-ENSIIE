@@ -1,0 +1,19 @@
+meta {
+  name: Minecraft Encounter Journal
+}
+
+tests {
+  test("Le type de reponse est explicite", function () {
+    const type = res.getHeader("content-type");
+    expect(type.includes("application/json") || type.includes("image/png")).to.equal(true);
+  });
+}
+
+docs {
+  Selectionner l'environnement Local.
+  Executer les dossiers 01 a 05 dans l'ordre, sans parallelisme.
+  Le dossier 06 est manuel : il necessite un arret puis un redemarrage de Redis.
+  En CLI, utiliser --exclude-tags manual,external pour le parcours automatique.
+  Le dossier 07 contacte le fournisseur officiel de skins et exige Internet.
+  Les creations restent en base ; chaque nouvelle initialisation utilise des UUID et pseudos uniques.
+}

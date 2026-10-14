@@ -1,0 +1,40 @@
+meta {
+  name: Initialiser et verifier les stockages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  const { v4 } = require("uuid");
+  const runId = v4().replace(/-/g, "").slice(0, 12);
+  bru.setVar("runId", runId);
+  bru.setVar("playerId", v4());
+  bru.setVar("playerUsername", "Explorer_" + runId);
+  bru.setVar("minimalPlayerId", v4());
+  bru.setVar("minimalPlayerUsername", "Visitor_" + runId);
+  bru.setVar("encounterId", v4());
+  bru.setVar("minimalEncounterId", v4());
+  bru.setVar("missingPlayerId", v4());
+  bru.setVar("missingEncounterId", v4());
+  bru.setVar("playerSnapshot", "");
+  bru.setVar("encounterSnapshot", "");
+}
+
+tests {
+  test("MongoDB et Redis sont accessibles", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal({ status: "ok" });
+  });
+}
+
+docs {
+  Executer cette requete en premier. Elle renouvelle les identifiants du parcours.
+  Rejouer seulement une creation conserve sa cle d'idempotence ; rejouer cette
+  initialisation demarre un nouveau jeu de donnees.
+}

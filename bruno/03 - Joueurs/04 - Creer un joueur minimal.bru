@@ -1,0 +1,35 @@
+meta {
+  name: Creer un joueur minimal sans compte Minecraft
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{minimalPlayerId}}
+}
+
+body:json {
+  {
+    "username": "{{minimalPlayerUsername}}",
+    "description": " ",
+    "minecraft_uuid": ""
+  }
+}
+
+tests {
+  test("Les champs facultatifs vides sont acceptes", function () {
+    expect(res.getStatus()).to.equal(201);
+    const player = res.getBody();
+    expect(player.id).to.equal(bru.getVar("minimalPlayerId"));
+    expect(player.description).to.equal(null);
+    expect(player.minecraft_uuid).to.equal(null);
+    expect(player.sync_status).to.equal("synced");
+  });
+}

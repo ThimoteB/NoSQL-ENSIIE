@@ -1,0 +1,10 @@
+meta {
+  name: Rencontres
+  seq: 4
+}
+
+script:pre-request {
+  if (!bru.getVar("playerSnapshot")) {
+    throw new Error("Executer d'abord le dossier 03 - Joueurs.");
+  }
+}

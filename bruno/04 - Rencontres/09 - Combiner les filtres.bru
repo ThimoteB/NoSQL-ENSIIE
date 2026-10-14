@@ -1,0 +1,24 @@
+meta {
+  name: Combiner les filtres
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/encounters?player_id={{playerId}}&species_id={{speciesId}}&biome_id={{biomeId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  player_id: {{playerId}}
+  species_id: {{speciesId}}
+  biome_id: {{biomeId}}
+}
+
+tests {
+  test("Les trois filtres sont combines avec ET", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal([JSON.parse(bru.getVar("encounterSnapshot"))]);
+  });
+}

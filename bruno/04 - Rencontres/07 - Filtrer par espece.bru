@@ -1,0 +1,25 @@
+meta {
+  name: Filtrer par espece
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/encounters?species_id={{speciesId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  species_id: {{speciesId}}
+}
+
+tests {
+  test("Toutes les rencontres concernent l'espece demandee", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.be.an("array").that.is.not.empty;
+    res.getBody().forEach(function (entry) {
+      expect(entry.species_id).to.equal(bru.getEnvVar("speciesId"));
+    });
+  });
+}

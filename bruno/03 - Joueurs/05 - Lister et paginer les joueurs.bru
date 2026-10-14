@@ -1,0 +1,26 @@
+meta {
+  name: Lister et paginer les joueurs
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/players?limit=2&offset=0
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 2
+  offset: 0
+}
+
+tests {
+  test("La pagination est bornee et le tri est stable", function () {
+    expect(res.getStatus()).to.equal(200);
+    const players = res.getBody();
+    expect(players).to.be.an("array").with.lengthOf(2);
+    const names = players.map(function (player) { return player.username_normalized; });
+    expect(names).to.deep.equal(names.slice().sort());
+  });
+}

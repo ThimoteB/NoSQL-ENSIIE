@@ -1,0 +1,47 @@
+meta {
+  name: Creer un joueur avec UUID Minecraft
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{playerId}}
+}
+
+body:json {
+  {
+    "username": "  {{playerUsername}}  ",
+    "description": " Explorateur de la taiga ",
+    "minecraft_uuid": "{{minecraftUuid}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("playerSnapshot", JSON.stringify(res.getBody()));
+  }
+}
+
+tests {
+  test("Le profil est nettoye et synchronise", function () {
+    expect(res.getStatus()).to.equal(201);
+    const player = res.getBody();
+    expect(player.id).to.equal(bru.getVar("playerId"));
+    expect(player.username).to.equal(bru.getVar("playerUsername"));
+    expect(player.username_normalized).to.equal(bru.getVar("playerUsername").toLowerCase());
+    expect(player.description).to.equal("Explorateur de la taiga");
+    expect(player.minecraft_uuid).to.equal(bru.getEnvVar("minecraftUuid"));
+    expect(player.sync_status).to.equal("synced");
+    expect(player.created_at).to.match(/Z$/);
+    expect(Number.isNaN(Date.parse(player.created_at))).to.equal(false);
+    expect(player).not.to.have.property("_id");
+    expect(player).not.to.have.property("_sync_status");
+  });
+}

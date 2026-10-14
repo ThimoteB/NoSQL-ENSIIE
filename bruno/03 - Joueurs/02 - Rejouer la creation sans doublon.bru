@@ -1,0 +1,31 @@
+meta {
+  name: Rejouer la creation sans doublon
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{playerId}}
+}
+
+body:json {
+  {
+    "username": "  {{playerUsername}}  ",
+    "description": " Explorateur de la taiga ",
+    "minecraft_uuid": "{{minecraftUuid}}"
+  }
+}
+
+tests {
+  test("L'identifiant et la date de creation restent identiques", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody()).to.deep.equal(JSON.parse(bru.getVar("playerSnapshot")));
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Lire le joueur
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/players/{{playerId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("Le profil relu est identique au profil cree", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal(JSON.parse(bru.getVar("playerSnapshot")));
+  });
+}

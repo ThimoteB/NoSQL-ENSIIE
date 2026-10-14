@@ -1,0 +1,20 @@
+meta {
+  name: Lister les types de rencontre
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/encounter-types
+  body: none
+  auth: none
+}
+
+tests {
+  test("Les quatre types sont disponibles", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().map(function (entry) { return entry.id; })).to.have.members([
+      "observation", "approach", "feeding", "taming"
+    ]);
+  });
+}

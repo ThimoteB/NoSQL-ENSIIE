@@ -1,0 +1,22 @@
+meta {
+  name: Filtrer par joueur
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/encounters?player_id={{playerId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  player_id: {{playerId}}
+}
+
+tests {
+  test("Le joueur a exactement une rencontre malgre le rejeu", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal([JSON.parse(bru.getVar("encounterSnapshot"))]);
+  });
+}

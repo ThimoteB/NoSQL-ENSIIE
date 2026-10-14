@@ -1,0 +1,23 @@
+meta {
+  name: Filtres sans resultat
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/encounters?player_id={{playerId}}&species_id=cow
+  body: none
+  auth: none
+}
+
+params:query {
+  player_id: {{playerId}}
+  species_id: cow
+}
+
+tests {
+  test("Un filtre valide sans correspondance retourne une liste vide", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal([]);
+  });
+}

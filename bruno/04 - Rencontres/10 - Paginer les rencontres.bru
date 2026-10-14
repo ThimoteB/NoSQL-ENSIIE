@@ -1,0 +1,24 @@
+meta {
+  name: Paginer les rencontres du joueur
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/encounters?player_id={{playerId}}&limit=1&offset=1
+  body: none
+  auth: none
+}
+
+params:query {
+  player_id: {{playerId}}
+  limit: 1
+  offset: 1
+}
+
+tests {
+  test("Le decalage saute l'unique rencontre du joueur", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal([]);
+  });
+}

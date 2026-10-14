@@ -1,0 +1,18 @@
+meta {
+  name: Lire la rencontre
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/encounters/{{encounterId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("La rencontre relue correspond a la creation", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal(JSON.parse(bru.getVar("encounterSnapshot")));
+  });
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Refuser un conflit d'idempotence joueur
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{playerId}}
+}
+
+body:json {
+  {
+    "username": "{{playerUsername}}",
+    "description": "Une autre description",
+    "minecraft_uuid": "{{minecraftUuid}}"
+  }
+}
+
+tests {
+  test("La meme cle ne peut pas changer les donnees", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().detail.code).to.equal("idempotency_conflict");
+  });
+}

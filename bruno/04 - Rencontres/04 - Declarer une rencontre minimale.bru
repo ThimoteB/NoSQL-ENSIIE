@@ -1,0 +1,38 @@
+meta {
+  name: Declarer une rencontre minimale
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{minimalEncounterId}}
+}
+
+body:json {
+  {
+    "player_id": "{{minimalPlayerId}}",
+    "species_id": "cow",
+    "animal_nickname": "",
+    "location": {"biome_id": "plains", "label": " "},
+    "encounter_type": "observation",
+    "description": "Une vache dans les plaines."
+  }
+}
+
+tests {
+  test("Le surnom et le nom du lieu restent facultatifs", function () {
+    expect(res.getStatus()).to.equal(201);
+    const encounter = res.getBody();
+    expect(encounter.id).to.equal(bru.getVar("minimalEncounterId"));
+    expect(encounter.animal_nickname).to.equal(null);
+    expect(encounter.location.label).to.equal(null);
+    expect(encounter.sync_status).to.equal("synced");
+  });
+}
