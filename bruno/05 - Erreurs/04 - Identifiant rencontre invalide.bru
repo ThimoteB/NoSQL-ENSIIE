@@ -1,0 +1,18 @@
+meta {
+  name: Identifiant rencontre invalide
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/encounters/not-a-uuid
+  body: none
+  auth: none
+}
+
+tests {
+  test("L'UUID de rencontre est valide", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["path", "encounter_id"]);
+  });
+}

@@ -1,0 +1,14 @@
+meta {
+  name: Pannes Redis - execution manuelle uniquement
+  seq: 6
+}
+
+docs {
+  Ne pas executer ce dossier en bloc.
+  1. Redis actif : executer 01.
+  2. docker compose stop redis : executer 02, 03 et 04.
+  3. docker compose start redis : executer 05, 06 et 07.
+  Ne pas redemarrer le backend pendant la panne : il refuserait de demarrer sans Redis.
+  Ces requetes utilisent des identifiants fixes dans l'environnement Local.
+  Retablir Redis meme si une assertion echoue.
+}

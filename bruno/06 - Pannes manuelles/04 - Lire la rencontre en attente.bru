@@ -1,0 +1,22 @@
+meta {
+  name: Redis arrete - lire la rencontre en attente
+  type: http
+  seq: 4
+  tags: [
+    manual
+  ]
+}
+
+get {
+  url: {{baseUrl}}/encounters/{{failureEncounterId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("MongoDB reste lisible avec le statut pending", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().id).to.equal(bru.getEnvVar("failureEncounterId"));
+    expect(res.getBody().sync_status).to.equal("pending");
+  });
+}

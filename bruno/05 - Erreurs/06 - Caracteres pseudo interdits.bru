@@ -1,0 +1,26 @@
+meta {
+  name: Caracteres pseudo interdits
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"username": "Alex Dupont"}
+}
+
+tests {
+  test("Les espaces interieurs sont refuses", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "username"]);
+  });
+}

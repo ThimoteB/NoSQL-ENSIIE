@@ -1,0 +1,26 @@
+meta {
+  name: UUID Minecraft invalide
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"username": "Invalid_{{runId}}", "minecraft_uuid": "not-a-uuid"}
+}
+
+tests {
+  test("Un UUID Minecraft mal forme est refuse", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "minecraft_uuid"]);
+  });
+}

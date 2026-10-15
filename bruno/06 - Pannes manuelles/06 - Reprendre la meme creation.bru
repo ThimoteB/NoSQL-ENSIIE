@@ -1,0 +1,37 @@
+meta {
+  name: Redis redemarre - reprendre sans doublon
+  type: http
+  seq: 6
+  tags: [
+    manual
+  ]
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{failureEncounterId}}
+}
+
+body:json {
+  {
+    "player_id": "{{failurePlayerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Rencontre du scenario de panne Redis."
+  }
+}
+
+tests {
+  test("La reprise termine la synchronisation avec le meme identifiant", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().id).to.equal(bru.getEnvVar("failureEncounterId"));
+    expect(res.getBody().sync_status).to.equal("synced");
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Rencontre introuvable
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/encounters/{{missingEncounterId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("Une rencontre inexistante retourne 404", function () {
+    expect(res.getStatus()).to.equal(404);
+    expect(res.getBody().detail.code).to.equal("not_found");
+  });
+}

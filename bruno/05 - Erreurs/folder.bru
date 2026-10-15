@@ -1,0 +1,10 @@
+meta {
+  name: Validation et erreurs attendues
+  seq: 5
+}
+
+script:pre-request {
+  if (!bru.getVar("playerSnapshot")) {
+    throw new Error("Executer d'abord les dossiers 01 - Systeme et 03 - Joueurs.");
+  }
+}

@@ -1,0 +1,40 @@
+meta {
+  name: Redis arrete - ecriture MongoDB conservee
+  type: http
+  seq: 3
+  tags: [
+    manual
+  ]
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{failureEncounterId}}
+}
+
+body:json {
+  {
+    "player_id": "{{failurePlayerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Rencontre du scenario de panne Redis."
+  }
+}
+
+tests {
+  test("Aucun succes complet n'est annonce", function () {
+    expect(res.getStatus()).to.equal(503);
+    const detail = res.getBody().detail;
+    expect(detail.code).to.equal("redis_sync_pending");
+    expect(detail.persisted_in_mongodb).to.equal(true);
+    expect(detail.collection).to.equal("encounters");
+    expect(detail.resource_id).to.equal(bru.getEnvVar("failureEncounterId"));
+  });
+}

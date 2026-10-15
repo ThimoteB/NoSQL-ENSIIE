@@ -1,0 +1,33 @@
+meta {
+  name: Espece inconnue
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "unknown_species",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Une espece hors catalogue."
+  }
+}
+
+tests {
+  test("Une espece absente du catalogue est refusee", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail.code).to.equal("unknown_reference");
+    expect(res.getBody().detail.message).to.include("species/");
+  });
+}

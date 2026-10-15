@@ -1,0 +1,21 @@
+meta {
+  name: Redis redemarre - sonde retablie
+  type: http
+  seq: 5
+  tags: [
+    manual
+  ]
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("Les deux stockages repondent a nouveau", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.deep.equal({ status: "ok" });
+  });
+}

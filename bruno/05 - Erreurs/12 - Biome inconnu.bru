@@ -1,0 +1,33 @@
+meta {
+  name: Biome inconnu
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "unknown_biome"},
+    "encounter_type": "observation",
+    "description": "Un biome hors catalogue."
+  }
+}
+
+tests {
+  test("Un biome absent du catalogue est refuse", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail.code).to.equal("unknown_reference");
+    expect(res.getBody().detail.message).to.include("biomes/");
+  });
+}

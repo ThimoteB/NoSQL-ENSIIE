@@ -1,0 +1,32 @@
+meta {
+  name: Type de rencontre invalide
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "teleportation",
+    "description": "Un type non propose."
+  }
+}
+
+tests {
+  test("Le type doit appartenir a la liste definie", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "encounter_type"]);
+  });
+}

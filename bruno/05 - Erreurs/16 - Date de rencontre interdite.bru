@@ -1,0 +1,33 @@
+meta {
+  name: Date de rencontre interdite
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Une rencontre sans date saisie.",
+    "encountered_at": "2026-10-15T10:00:00Z"
+  }
+}
+
+tests {
+  test("La date de rencontre ne fait pas partie du formulaire", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "encountered_at"]);
+  });
+}

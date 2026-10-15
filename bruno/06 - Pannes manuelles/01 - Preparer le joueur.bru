@@ -1,0 +1,31 @@
+meta {
+  name: Redis actif - preparer le joueur
+  type: http
+  seq: 1
+  tags: [
+    manual
+  ]
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: {{failurePlayerId}}
+}
+
+body:json {
+  {"username": "{{failureUsername}}"}
+}
+
+tests {
+  test("Le joueur du scenario de panne est disponible", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().id).to.equal(bru.getEnvVar("failurePlayerId"));
+    expect(res.getBody().sync_status).to.equal("synced");
+  });
+}

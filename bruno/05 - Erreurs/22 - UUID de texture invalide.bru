@@ -1,0 +1,18 @@
+meta {
+  name: UUID de texture invalide
+  type: http
+  seq: 22
+}
+
+get {
+  url: {{baseUrl}}/skins/not-a-uuid/texture
+  body: none
+  auth: none
+}
+
+tests {
+  test("Une texture ne peut pas etre demandee avec une URL arbitraire", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["path", "minecraft_uuid"]);
+  });
+}

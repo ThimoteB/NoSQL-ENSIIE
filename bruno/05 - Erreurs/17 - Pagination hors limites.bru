@@ -1,0 +1,25 @@
+meta {
+  name: Pagination hors limites
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/encounters?limit=101&offset=-1
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 101
+  offset: -1
+}
+
+tests {
+  test("La limite maximale et le decalage sont controles", function () {
+    expect(res.getStatus()).to.equal(422);
+    const fields = res.getBody().detail.map(function (error) { return error.loc[1]; });
+    expect(fields).to.include("limit");
+    expect(fields).to.include("offset");
+  });
+}

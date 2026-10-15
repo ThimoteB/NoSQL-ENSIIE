@@ -1,0 +1,26 @@
+meta {
+  name: Champ joueur inconnu
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"username": "Invalid_{{runId}}", "password": "not-supported"}
+}
+
+tests {
+  test("Les champs inconnus sont refuses", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].type).to.equal("extra_forbidden");
+  });
+}

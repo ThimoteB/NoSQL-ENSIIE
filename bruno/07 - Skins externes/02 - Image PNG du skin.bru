@@ -1,0 +1,23 @@
+meta {
+  name: Image PNG du skin pour le rendu 3D
+  type: http
+  seq: 2
+  tags: [
+    external
+  ]
+}
+
+get {
+  url: {{baseUrl}}/skins/{{minecraftUuid}}/texture
+  body: none
+  auth: none
+}
+
+tests {
+  test("La texture est une image PNG mise en cache", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getHeader("content-type")).to.include("image/png");
+    expect(res.getHeader("cache-control")).to.include("max-age=3600");
+    expect(res.getHeader("x-content-type-options")).to.equal("nosniff");
+  });
+}

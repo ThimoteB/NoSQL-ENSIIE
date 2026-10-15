@@ -1,0 +1,33 @@
+meta {
+  name: Coordonnee interdite
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}", "coordinates": {"x": 1, "y": 64, "z": 2}},
+    "encounter_type": "observation",
+    "description": "Une rencontre avec des coordonnees non prises en charge."
+  }
+}
+
+tests {
+  test("Aucune coordonnee n'est acceptee", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "location", "coordinates"]);
+    expect(res.getBody().detail[0].type).to.equal("extra_forbidden");
+  });
+}

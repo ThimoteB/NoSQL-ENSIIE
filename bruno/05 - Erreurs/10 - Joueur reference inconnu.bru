@@ -1,0 +1,33 @@
+meta {
+  name: Joueur reference inconnu
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{missingPlayerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "Une rencontre sans joueur existant."
+  }
+}
+
+tests {
+  test("La reference joueur est controlee", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail.code).to.equal("unknown_reference");
+    expect(res.getBody().detail.message).to.include("players/");
+  });
+}

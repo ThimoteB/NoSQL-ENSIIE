@@ -1,0 +1,25 @@
+meta {
+  name: Filtre mal forme
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/encounters?player_id=invalid&species_id=Invalid-Species
+  body: none
+  auth: none
+}
+
+params:query {
+  player_id: invalid
+  species_id: Invalid-Species
+}
+
+tests {
+  test("Les identifiants des filtres sont valides avant interrogation", function () {
+    expect(res.getStatus()).to.equal(422);
+    const fields = res.getBody().detail.map(function (error) { return error.loc[1]; });
+    expect(fields).to.include("player_id");
+    expect(fields).to.include("species_id");
+  });
+}

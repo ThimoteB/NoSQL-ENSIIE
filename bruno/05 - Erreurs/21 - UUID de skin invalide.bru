@@ -1,0 +1,18 @@
+meta {
+  name: UUID de skin invalide
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/skins/not-a-uuid
+  body: none
+  auth: none
+}
+
+tests {
+  test("Un UUID invalide est refuse sans contacter le fournisseur", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["path", "minecraft_uuid"]);
+  });
+}

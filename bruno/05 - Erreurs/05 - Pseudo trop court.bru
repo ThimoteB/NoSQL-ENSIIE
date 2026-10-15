@@ -1,0 +1,26 @@
+meta {
+  name: Pseudo trop court
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"username": "ab"}
+}
+
+tests {
+  test("Un pseudo doit contenir au moins trois caracteres", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "username"]);
+  });
+}

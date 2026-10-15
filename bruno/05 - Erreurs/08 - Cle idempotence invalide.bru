@@ -1,0 +1,27 @@
+meta {
+  name: Cle idempotence invalide
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/players
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: not-a-uuid
+}
+
+body:json {
+  {"username": "Invalid_{{runId}}"}
+}
+
+tests {
+  test("La cle d'idempotence doit etre un UUID", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc[0]).to.equal("header");
+  });
+}

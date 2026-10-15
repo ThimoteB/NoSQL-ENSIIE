@@ -1,0 +1,19 @@
+meta {
+  name: Identifiant joueur invalide
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/players/not-a-uuid
+  body: none
+  auth: none
+}
+
+tests {
+  test("Un identifiant mal forme retourne 422", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail).to.be.an("array").that.is.not.empty;
+    expect(res.getBody().detail[0].loc).to.deep.equal(["path", "player_id"]);
+  });
+}

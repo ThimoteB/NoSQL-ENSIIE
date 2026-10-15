@@ -1,0 +1,32 @@
+meta {
+  name: Contexte vide
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "   "
+  }
+}
+
+tests {
+  test("Le contexte ne peut pas etre compose uniquement d'espaces", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "description"]);
+  });
+}

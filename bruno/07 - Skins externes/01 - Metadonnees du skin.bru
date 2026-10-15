@@ -1,0 +1,24 @@
+meta {
+  name: Metadonnees du skin Minecraft
+  type: http
+  seq: 1
+  tags: [
+    external
+  ]
+}
+
+get {
+  url: {{baseUrl}}/skins/{{minecraftUuid}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("Le backend renvoie le modele et une URL locale de texture", function () {
+    expect(res.getStatus()).to.equal(200);
+    const skin = res.getBody();
+    expect(skin.minecraft_uuid).to.equal(bru.getEnvVar("minecraftUuid"));
+    expect(["classic", "slim"]).to.include(skin.model);
+    expect(skin.texture_url).to.match(/^\/api\/skins\/[0-9a-f-]+\/texture\?v=[0-9a-f]+$/);
+  });
+}

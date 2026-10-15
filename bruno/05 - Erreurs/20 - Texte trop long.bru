@@ -1,0 +1,36 @@
+meta {
+  name: Texte trop long
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "player_id": "{{playerId}}",
+    "species_id": "{{speciesId}}",
+    "location": {"biome_id": "{{biomeId}}"},
+    "encounter_type": "observation",
+    "description": "{{oversizedContext}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("oversizedContext", "x".repeat(4001));
+}
+
+tests {
+  test("Le contexte ne peut pas depasser 4000 caracteres", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().detail[0].loc).to.deep.equal(["body", "description"]);
+  });
+}

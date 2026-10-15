@@ -1,0 +1,29 @@
+meta {
+  name: Champs obligatoires absents
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/encounters
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("Tous les champs obligatoires sont signales", function () {
+    expect(res.getStatus()).to.equal(422);
+    const fields = res.getBody().detail.map(function (error) { return error.loc[1]; });
+    expect(fields).to.have.members([
+      "player_id", "species_id", "location", "encounter_type", "description"
+    ]);
+  });
+}

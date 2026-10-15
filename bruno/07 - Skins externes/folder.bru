@@ -1,0 +1,11 @@
+meta {
+  name: Skins Minecraft - connexion externe requise
+  seq: 7
+}
+
+docs {
+  Le backend contacte sessionserver.mojang.com et textures.minecraft.net.
+  Les reponses sont mises en cache une heure dans Redis.
+  En cas de panne du fournisseur, les tests de succes echouent explicitement.
+  Ce dossier est exclu du parcours automatique avec --exclude-tags manual,external.
+}

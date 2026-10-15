@@ -1,0 +1,21 @@
+meta {
+  name: Redis arrete - sonde indisponible
+  type: http
+  seq: 2
+  tags: [
+    manual
+  ]
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("La sonde signale explicitement la panne", function () {
+    expect(res.getStatus()).to.equal(503);
+    expect(res.getBody().detail.code).to.equal("storage_unavailable");
+  });
+}
