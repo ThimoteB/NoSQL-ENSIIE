@@ -307,3 +307,81 @@ les clés étrangères au projet. Ce n'est pas un nettoyage des anciennes clés 
 les modifications/suppressions et changements de catalogue nécessiteront une
 stratégie de migration dédiée.
 
+## Collection Bruno
+
+Ouvrir le dossier [`bruno`](bruno/) avec **Open Collection** dans Bruno, puis
+sélectionner l'environnement **Local**. L'application Docker doit être démarrée.
+La collection contient **56 requêtes**, chacune avec des tests automatisés :
+
+| Dossier | Contenu |
+| --- | --- |
+| `01 - Systeme` | Initialisation des variables, sonde MongoDB/Redis et schéma OpenAPI |
+| `02 - Catalogues` | Espèces, biomes et types de rencontre |
+| `03 - Joueurs` | Création complète/minimale, UUID Minecraft, lecture, pagination, unicité et idempotence |
+| `04 - Rencontres` | Création complète/minimale, lecture, filtres, pagination et idempotence |
+| `05 - Erreurs` | Réponses attendues 404 et 422 : identifiants, références, champs, limites |
+| `06 - Pannes manuelles` | Panne Redis, écriture partielle, lecture `pending` et reprise sans doublon |
+| `07 - Skins externes` | Métadonnées et image PNG du skin, connexion au fournisseur requise |
+
+### Parcours automatique : 47 requêtes
+
+Exécuter les dossiers **01 à 05 dans l'ordre**, sans parallélisme. Dans le runner
+graphique, désélectionner les dossiers **06 et 07** (ou exclure les tags `manual,external`).
+Ne pas exécuter toute la collection sans cette exclusion : le scénario de panne
+nécessite des manipulations Docker entre les requêtes.
+
+La première requête génère les UUID et pseudos de la session ; les requêtes
+suivantes réutilisent les identifiants et comparent les réponses sauvegardées.
+Les tests d'erreur sont réussis lorsqu'ils reçoivent l'erreur attendue.
+
+En CLI, depuis la racine du dépôt, avec Node.js/npm disponibles :
+
+```sh
+cd bruno
+npm exec --yes --package=@usebruno/cli@4.2.1 -- bru run --env Local --exclude-tags manual,external --bail
+```
+
+Cette version du CLI est épinglée pour rendre l'exécution reproductible.
+Le sandbox `safe` par défaut suffit ; aucun script n'exécute de commande système.
+Pour changer le port HTTP sans éditer l'environnement :
+
+```sh
+npm exec --yes --package=@usebruno/cli@4.2.1 -- bru run --env Local --exclude-tags manual,external --bail \
+  --env-var baseUrl=http://localhost:8081/api
+```
+
+Le parcours ajoute des données de démonstration et ne les supprime pas : l'API
+n'a pas encore de suppression. Chaque nouvelle initialisation génère des pseudos
+uniques ; rejouer seulement une création idempotente ne crée pas de doublon.
+L'UUID Minecraft d'exemple sert à tester son stockage dans les dossiers 01 à 05.
+Le dossier 07 l'utilise pour demander son skin au fournisseur officiel. Les UUID et instantanés du parcours sont des variables runtime Bruno,
+pas des secrets ni des modifications de l'environnement versionné.
+
+Pour vérifier les skins séparément, avec une connexion Internet :
+
+```sh
+npm exec --yes --package=@usebruno/cli@4.2.1 -- bru run '07 - Skins externes' --env Local --bail
+```
+
+### Scénario manuel Redis : 7 requêtes
+
+Dans le dossier **06 - Pannes manuelles**, exécuter les étapes séparément :
+
+1. Redis actif : requête **01**, pour préparer le joueur.
+2. Depuis la racine du dépôt, lancer `docker compose stop redis`.
+3. Exécuter les requêtes **02**, **03**, **04** : sonde 503, création 503 avec
+   conservation MongoDB, puis lecture de la rencontre avec `sync_status=pending`.
+4. Lancer `docker compose start redis` et attendre qu'il soit sain.
+5. Exécuter **05**, **06**, **07** : sonde rétablie, reprise avec la même clé,
+   puis vérification de l'unique rencontre synchronisée.
+
+**Toujours redémarrer Redis même si un test échoue.** Ce scénario interrompt
+temporairement le stockage de la pile de développement : ne pas le lancer sur un
+environnement partagé utilisé par d'autres personnes. Ne pas redémarrer le backend
+pendant la panne : son initialisation exige les deux bases.
+
+Les identifiants et le pseudo de ce scénario sont fixes dans `Local.bru` pour
+pouvoir exécuter ses requêtes une par une, même entre plusieurs invocations du CLI.
+Le scénario est rejouable avec ces mêmes valeurs. Les pannes ne sont jamais
+déclenchées automatiquement par les scripts Bruno.
+
