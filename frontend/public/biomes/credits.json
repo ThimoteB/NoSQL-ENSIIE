@@ -1,0 +1,21 @@
+{
+  "project": "CookieCraft : Explorers",
+  "source": "Minecraft Wiki — captures du jeu, sans génération d'images",
+  "copyright": "Minecraft © Mojang Studios / Microsoft. Ces captures ne sont pas sous licence Creative Commons.",
+  "usage": "Projet étudiant non officiel consacré à Minecraft ; respecter les Minecraft Usage Guidelines pour toute réutilisation.",
+  "usageGuidelines": "https://www.minecraft.net/usage-guidelines",
+  "sourceLicense": "https://minecraft.wiki/w/Template:License_Mojang",
+  "processing": "Redimensionnement proportionnel (1600 pixels maximum en largeur), compression WebP. Aucun ajout ni retrait de filigrane.",
+  "images": [
+    { "file": "forest.webp", "page": "https://minecraft.wiki/w/File:Forest.png", "url": "https://minecraft.wiki/images/archive/20250327021606%21Forest.png", "contributor": "HurricaneBeryl", "revision": "2022-03-24T15:58:10Z", "note": "Terrain et nuages 1.18" },
+    { "file": "taiga.webp", "page": "https://minecraft.wiki/w/File:Taiga.png", "url": "https://minecraft.wiki/images/archive/20240115164009%21Taiga.png", "contributor": "HurricaneBeryl", "revision": "2023-03-21T21:05:15Z", "note": "Terrain et nuages 1.18+" },
+    { "file": "plains.webp", "page": "https://minecraft.wiki/w/File:Plains.png", "url": "https://minecraft.wiki/images/archive/20250204140417%21Plains.png", "contributor": "HurricaneBeryl", "revision": "2022-03-24T02:26:01Z", "note": "Java 1.18.2" },
+    { "file": "desert.webp", "page": "https://minecraft.wiki/w/File:Desert.png", "url": "https://minecraft.wiki/images/Desert.png?7674b", "contributor": "Ssysi", "revision": "2026-06-14T10:43:47Z", "note": "Java 26.1.2 ; édition indiquée sur la page source" },
+    { "file": "jungle.webp", "page": "https://minecraft.wiki/w/File:Jungle.png", "url": "https://minecraft.wiki/images/archive/20250525115952%21Jungle.png", "contributor": "Amirhosseinta", "revision": "2025-05-25T10:45:59Z", "note": "Java snapshot 25w21a" },
+    { "file": "savanna.webp", "page": "https://minecraft.wiki/w/File:Savanna.png", "url": "https://minecraft.wiki/images/Savanna.png?87338", "contributor": "User-12316399", "revision": "2026-06-02T14:36:42Z", "note": "Java 26.2 Pre-Release 3 ; édition indiquée sur la page source" },
+    { "file": "swamp.webp", "page": "https://minecraft.wiki/w/File:Swamp.png", "url": "https://minecraft.wiki/images/archive/20260504120952%21Swamp.png", "contributor": "Brandcraft", "revision": "2025-03-27T19:12:20Z", "note": "Spring to Life" },
+    { "file": "beach.webp", "page": "https://minecraft.wiki/w/File:Beach.png", "url": "https://minecraft.wiki/images/Beach.png?c198b", "contributor": "User-12316399", "revision": "2026-06-02T14:28:20Z", "note": "Java 26.2 Pre-Release 3 ; édition indiquée sur la page source" },
+    { "file": "ocean.webp", "page": "https://minecraft.wiki/w/File:Ocean.png", "url": "https://minecraft.wiki/images/archive/20230112154918%21Ocean.png", "contributor": "Nixinova", "revision": "2019-07-16T05:57:28Z", "note": "Terrain aquatique, textures classiques" },
+    { "file": "lush_caves.webp", "page": "https://minecraft.wiki/w/File:Lush_Caves.png", "url": "https://minecraft.wiki/images/Lush_Caves.png?5eb3e", "contributor": "Harri", "revision": "2026-03-22T03:06:57Z", "note": "Java 26.1 Release Candidate 2 ; édition indiquée sur la page source" }
+  ]
+}

@@ -1,0 +1,8 @@
+.world { position: fixed; inset: 0; z-index: -2; overflow: hidden; background: #302a23; }
+.world-image { width: 100%; height: 100%; object-fit: cover; display: block; animation: world-appear .7s ease-out both; }
+.world-menu .world-image { width: 108%; max-width: none; animation: panorama 55s ease-in-out infinite alternate; }
+.world-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #00000010 10%, #100c0840 65%, #0c0908b3 100%); }
+.screen-journal .world-vignette, .screen-players .world-vignette, .screen-create .world-vignette { background-color: #17131055; }
+.world-error { position: absolute; bottom: 0; left: 1rem; color: #fff; background: #302a23; padding: .3rem; font-size: .7rem; }
+@keyframes panorama { from { transform: translateX(0) scale(1); } to { transform: translateX(-5%) scale(1.03); } }
+@keyframes world-appear { from { opacity: .3; } to { opacity: 1; } }
