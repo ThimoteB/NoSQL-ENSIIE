@@ -1,0 +1,21 @@
+{
+  "project": "CookieCraft : Explorers",
+  "source": "Minecraft Wiki — rendus des modèles du jeu sur fond transparent, non générés par IA",
+  "copyright": "Modèles et textures Minecraft © Mojang Studios / Microsoft. Projet étudiant non officiel.",
+  "usageGuidelines": "https://www.minecraft.net/usage-guidelines",
+  "processing": "Recadrage des marges transparentes, redimensionnement à 192 pixels maximum, compression WebP avec transparence. Pour les GIF, première image uniquement.",
+  "images": [
+    { "file": "wolf.webp", "sourceFile": "Wolf_JE2_BE2.png", "page": "https://minecraft.wiki/w/File:Wolf_JE2_BE2.png", "contributor": "Grhead2", "revision": "2020-05-31T09:40:35Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "fox.webp", "sourceFile": "Fox_JE1_BE1.png", "page": "https://minecraft.wiki/w/File:Fox_JE1_BE1.png", "contributor": "Oakar567", "revision": "2019-02-13T17:42:05Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "cow.webp", "sourceFile": "Cow_JE7_BE4.png", "page": "https://minecraft.wiki/w/File:Cow_JE7_BE4.png", "contributor": "MCitizein", "revision": "2026-01-12T18:05:12Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "pig.webp", "sourceFile": "Temperate_Pig_JE4_BE2.png", "page": "https://minecraft.wiki/w/File:Temperate_Pig_JE4_BE2.png", "contributor": "NRPAN1", "revision": "2026-01-19T00:22:04Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "sheep.webp", "sourceFile": "White_Sheep_JE5.png", "page": "https://minecraft.wiki/w/File:White_Sheep_JE5.png", "contributor": "Pneuma01", "revision": "2025-04-10T19:44:29Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "chicken.webp", "sourceFile": "Chicken_JE2_BE2.png", "page": "https://minecraft.wiki/w/File:Chicken_JE2_BE2.png", "contributor": "Thgabs", "revision": "2019-07-21T10:36:52Z", "license": "CC BY-NC 3.0 pour le rendu ; Minecraft Usage Guidelines pour les éléments du jeu", "licenseUrl": "https://creativecommons.org/licenses/by-nc/3.0/" },
+    { "file": "horse.webp", "sourceFile": "White_Horse.png", "page": "https://minecraft.wiki/w/File:White_Horse.png", "contributor": "Capopanzo", "revision": "2026-03-13T01:33:28Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "cat.webp", "sourceFile": "Jellie_Cat.png", "page": "https://minecraft.wiki/w/File:Jellie_Cat.png", "contributor": "Luckowski", "revision": "2018-12-17T11:42:54Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "rabbit.webp", "sourceFile": "Brown_Rabbit_JE5.png", "page": "https://minecraft.wiki/w/File:Brown_Rabbit_JE5.png", "contributor": "Zamburger", "revision": "2026-03-05T10:02:08Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "axolotl.webp", "sourceFile": "Axolotl_Idle_Floor_Underwater.gif", "page": "https://minecraft.wiki/w/File:Axolotl_Idle_Floor_Underwater.gif", "contributor": "Zamburger", "revision": "2026-03-08T11:19:49Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "bee.webp", "sourceFile": "Bee.png", "page": "https://minecraft.wiki/w/File:Bee.png", "contributor": "Michael18751", "revision": "2020-03-17T18:05:06Z", "license": "Minecraft Usage Guidelines" },
+    { "file": "turtle.webp", "sourceFile": "Turtle_JE3_BE1.png", "page": "https://minecraft.wiki/w/File:Turtle_JE3_BE1.png", "contributor": "Hugman 76", "revision": "2018-07-03T14:52:37Z", "license": "Rendu et adaptation WebP : CC BY-NC-SA 3.0 ; éléments du jeu : Minecraft Usage Guidelines", "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/3.0/" }
+  ]
+}
