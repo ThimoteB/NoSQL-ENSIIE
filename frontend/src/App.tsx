@@ -124,14 +124,14 @@ function CreatePlayer({ onBack, onCreated }: { onBack: () => void; onCreated: (p
         <p className="muted">Pas de mot de passe. Juste toi et l’aventure.</p>
         <fieldset disabled={blocked}>
           <label htmlFor="username">Pseudo <span className="required">*</span></label>
-          <input id="username" name="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
+          <input id="username" name="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.trim() })}
             minLength={3} maxLength={32} pattern="[A-Za-z0-9_]{3,32}" required placeholder="Ex. RenardDesBois" autoComplete="nickname" />
           <small>3 à 32 lettres, chiffres ou tirets bas.</small>
           <label htmlFor="player-description">Quelques mots sur toi <span className="optional">facultatif</span></label>
           <textarea id="player-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
             maxLength={500} rows={3} placeholder="Collectionneur de rencontres, ami des renards…" />
           <label htmlFor="minecraft-uuid">UUID Minecraft Java <span className="optional">facultatif</span></label>
-          <input id="minecraft-uuid" value={form.uuid} onChange={(e) => setForm({ ...form, uuid: e.target.value })}
+          <input id="minecraft-uuid" value={form.uuid} onChange={(e) => setForm({ ...form, uuid: e.target.value.trim() })}
             pattern="([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
             placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellCheck={false} maxLength={36} />
           <div className="field-inline"><small>Pour porter le skin actuel d’un compte Java. Association non vérifiée.</small>
