@@ -307,6 +307,129 @@ les clés étrangères au projet. Ce n'est pas un nettoyage des anciennes clés 
 les modifications/suppressions et changements de catalogue nécessiteront une
 stratégie de migration dédiée.
 
+## Interface et skins
+
+Le menu **Continuer** ouvre une liste paginée de profils publics avec personnages
+3D. **Nouvelle partie** crée un profil avec pseudo, description et UUID Minecraft
+facultatifs pour les deux derniers champs. Il n'y a pas d'authentification.
+
+Après sélection, un écran de préparation charge réellement le profil, les
+catalogues et le journal. L'animation de terrain est décorative, pas une génération
+de monde Minecraft ; la progression compte les trois étapes de chargement.
+Cet écran reste affiché **au moins cinq secondes**, y compris après une création
+de profil. Avec la réduction des animations activée, le terrain est statique,
+mais le délai est conservé. Les boutons gris à relief, panneaux pierre/terre et
+survols gris bleuté s'inspirent de **Minecraft Java**, pas de Bedrock.
+En cas d'erreur, le joueur peut réessayer ou revenir au menu.
+
+Le journal possède deux onglets :
+
+Le skin de l'explorateur actif reste affiché en 3D dans l'en-tête des deux onglets,
+avec le même mode compatible sans WebGL que lors de la création et de la sélection.
+Les personnages sont affichés sans socle.
+
+- **Nouvelle rencontre** : la saisie est conservée en changeant d'onglet.
+  Une véritable capture du jeu change selon le biome choisi. Chaque soumission garde
+  sa clé d'idempotence lors d'une reprise ; après une réponse incertaine, les champs
+  et le changement de profil sont verrouillés jusqu'à résolution. Un avertissement
+  du navigateur protège également la fermeture/recharge pendant une écriture en attente.
+- **Toutes les rencontres** : pagination et filtres par explorateur, espèce et
+  biome, auteur, lieu et statut de synchronisation. Le filtre des explorateurs
+  permet de charger les profils par lots au-delà de la première page.
+  Chaque espèce possède un portrait transparent issu d'un rendu de son modèle
+  Minecraft, à la place d'une icône générique. Les douze images sont servies
+  localement en WebP, sans moteur 3D supplémentaire pour les animaux.
+
+L'interface est adaptée aux petits écrans, utilisable au clavier et respecte
+`prefers-reduced-motion`. Les onglets sont navigables avec les flèches gauche/droite.
+Les appels API passent par `/api` sur la même origine, avec délai de 20 secondes.
+Un rechargement complet revient au menu ; les brouillons ne sont pas stockés
+durablement dans le navigateur.
+
+### Livraison des skins
+
+Le backend utilise les services officiels `sessionserver.mojang.com` et
+`textures.minecraft.net`, en HTTPS, sans redirection ni URL fournie directement
+par le visiteur. Seuls l'UUID demandé et la référence publique de texture sont
+transmis à ces services, pas le pseudo local, la description ou les rencontres.
+La connectivité sortante du backend passe par le réseau `web` ; les bases restent
+isolées.
+
+Le profil est limité à 64 Kio et l'image à 512 Kio. Seules les textures PNG 64×32
+ou 64×64 sont acceptées et réencodées. Le modèle classique ou slim est communiqué
+au frontend, qui charge la texture depuis notre API avec `skinview3d`.
+Ce sont des textures, pas des captures d'écran de personnages.
+
+Redis conserve un **cache technique** `skin-cache:{uuid}` pendant une heure,
+séparé des clés métier sans expiration. Les textures ne sont pas ajoutées au dépôt.
+Un compte sans skin renvoie 404, une réponse invalide 502, un fournisseur indisponible
+503. Les erreurs sont visibles dans l'interface ; un personnage original de
+remplacement permet de continuer. L'absence de cache est journalisée mais ne bloque
+pas la récupération auprès du fournisseur.
+
+La bibliothèque 3D est chargée à la demande. Les personnages hors écran sont
+déchargés, et l'animation est suspendue lorsque l'onglet du navigateur est masqué.
+Sans WebGL (ou après perte du contexte), un rendu **CSS 3D** affiche le même skin :
+six volumes texturés, couches externes, modèles classique/slim et anciennes
+textures 64×32. Ce mode continue de récupérer la texture du backend ; il ne
+remplace pas un skin disponible par une icône. Sa rotation est automatique,
+sans les contrôles souris du moteur WebGL.
+Un canvas neuf est créé à chaque remontage et les contextes GPU sont libérés.
+
+Dans Opera, si « Mode 3D compatible » apparaît, vérifier **Réglages → Système →
+Utiliser l'accélération graphique si disponible**, puis redémarrer le navigateur.
+La page `opera://gpu` permet de vérifier l'état de WebGL. Le site ne peut pas
+réactiver une fonction GPU bloquée par le navigateur, un pilote ou une politique
+système ; le rendu CSS 3D est prévu pour conserver l'affichage dans ce cas.
+
+### Ambiance audio et ressources
+
+La musique est **désactivée tant qu'aucun fichier n'est configuré**. Un clic court
+original est synthétisé avec Web Audio. Le bouton Son règle séparément musique et
+effets, permet de couper le son et mémorise les préférences dans `localStorage`.
+L'audio ne démarre qu'après interaction, conformément aux règles des navigateurs.
+
+Pour ajouter vos fichiers dont la diffusion est autorisée, les placer dans
+`frontend/public/audio/` puis modifier `manifest.json` :
+
+```json
+{
+  "music": "/audio/ambiance.mp3",
+  "click": "/audio/clic.ogg"
+}
+```
+
+Les formats acceptés par le manifeste sont `.mp3`, `.ogg` et `.wav`, avec un nom
+simple composé de lettres, chiffres, `_` ou `-`. Garder `null` pour les ressources
+absentes, puis reconstruire le frontend avec `docker compose up --build -d`.
+Un fichier configuré mais introuvable ou illisible produit un message dans les
+réglages audio. La musique boucle et se met en pause dans un onglet masqué.
+
+Les dix paysages sont de vraies captures Minecraft provenant du **Minecraft Wiki**,
+stockées localement en WebP dans `frontend/public/biomes/` : aucun dessin de biome
+généré, aucun hotlink ni requête au wiki depuis le navigateur. Les fichiers
+`credits.json` (également accessible depuis le pied de page) détaillent les URL,
+révisions et contributeurs. Seuls le redimensionnement et la compression ont été
+appliqués, sans suppression de filigrane. Ces images restent la propriété de
+Mojang/Microsoft et relèvent des [Minecraft Usage Guidelines](https://www.minecraft.net/usage-guidelines),
+**pas** de la licence Creative Commons du texte du wiki. Le site est un projet
+étudiant non officiel, ni approuvé ni associé à Mojang ou Microsoft.
+
+La texture du personnage de remplacement et les styles sont originaux.
+Les portraits d'animaux, leurs contributeurs et conditions figurent dans
+[`frontend/public/animals/credits.json`](frontend/public/animals/credits.json),
+également accessible dans le pied de page. Les rendus de poule et de tortue
+portent respectivement les conditions CC BY-NC 3.0 et CC BY-NC-SA 3.0, en plus
+des droits Mojang sur les éléments du jeu : usage non commercial, attribution
+et partage de l'adaptation de la tortue sous la même licence. Les marges
+transparentes sont recadrées et les images redimensionnées, sans génération IA.
+La police **VT323** est distribuée sous OFL-1.1, `skinview3d` et Three.js
+sous MIT. Les licences des dépendances d'exécution sont copiées dans `/licenses/`
+au build (par exemple `/licenses/fontsource-vt323.txt` et `/licenses/skinview3d.txt`).
+Le projet ne contient ni pistes C418 ni sons extraits du jeu.
+Ne publier des MP3 ou images tiers que si leur licence ou votre
+autorisation couvre le site et le dépôt GitHub.
+
 ## Collection Bruno
 
 Ouvrir le dossier [`bruno`](bruno/) avec **Open Collection** dans Bruno, puis
@@ -384,4 +507,72 @@ Les identifiants et le pseudo de ce scénario sont fixes dans `Local.bru` pour
 pouvoir exécuter ses requêtes une par une, même entre plusieurs invocations du CLI.
 Le scénario est rejouable avec ces mêmes valeurs. Les pannes ne sont jamais
 déclenchées automatiquement par les scripts Bruno.
+
+## Vérifications locales
+
+Validation de la configuration Docker, sans démarrer les conteneurs :
+
+```sh
+docker compose config --quiet
+```
+
+Vérification TypeScript et compilation du frontend (Node.js 22.12 ou plus récent) :
+
+```sh
+cd frontend
+npm ci
+npm run build
+```
+
+Tests navigateur reproductibles, une fois la pile Docker démarrée sur le port 8080 :
+
+```sh
+cd frontend
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+Ils couvrent création et sélection, conservation du brouillon, filtres,
+reprise après perte d'une réponse d'écriture sans doublon, affichage mobile,
+validation, erreur du fournisseur de skins, mémorisation des réglages audio,
+alignement du panneau, délai de cinq secondes, chargement des dix captures et
+rendu CSS 3D sans WebGL (classique, slim et ancien format).
+Ils vérifient aussi la transparence et la couverture de toutes les espèces par les
+portraits, le skin persistant dans le journal et la superposition du texte jaune
+sur la fin du titre.
+Ils créent des données de test dans la pile locale, sans suppression automatique.
+Les rapports/éventuelles traces restent dans les dossiers ignorés par Git.
+
+Tests backend avec Python 3.13 (MongoDB et Redis sont simulés pour cette suite) :
+
+```sh
+cd backend
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m pytest -q
+.venv/bin/python -m mypy app --check-untyped-defs
+```
+
+Ces tests couvrent notamment la validation, les UUID, l'unicité, les références,
+la double écriture, les filtres, l'idempotence, les pannes/reprises et la livraison
+des skins (fournisseur simulé, contrôle des URL, taille, format PNG et cache).
+Le test de stockage réel est ignoré sans `RUN_LIVE_STORAGE_TESTS=1`.
+
+Tests avec de vrais MongoDB et Redis, dans une pile séparée sans port publié :
+
+```sh
+docker compose -f compose.test.yaml up --build --abort-on-container-exit --exit-code-from tests
+docker compose -f compose.test.yaml down -v
+```
+
+Cette pile a son propre nom, ses réseaux et ses données de test : ne pas la
+fusionner avec `compose.yaml`. Le test réel vérifie le démarrage de l'application,
+les validateurs et l'index unique MongoDB, les écritures Redis, la resynchronisation
+et la relecture après réouverture des connexions. Il ne remplace pas le test de
+recréation des conteneurs et volumes décrit plus haut.
+
+La validation complète de l'infrastructure nécessite un moteur Docker actif :
+`docker compose up --build --wait`, puis vérifier l'interface, l'état des quatre
+services et le scénario de persistance décrit plus haut.
 
