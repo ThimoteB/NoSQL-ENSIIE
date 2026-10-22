@@ -36,6 +36,7 @@ function PlayerPicker({ onBack, onCreate, onChoose }: {
 }) {
   const [page, setPage] = useState(0);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [hasNext, setHasNext] = useState(false);
   const [selected, setSelected] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,8 +44,9 @@ function PlayerPicker({ onBack, onCreate, onChoose }: {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(""); setSelected(null);
-    request<Player[]>(`/players?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`, { signal: controller.signal })
-      .then(setPlayers)
+    // One extra item tells whether a next page exists.
+    request<Player[]>(`/players?limit=${PAGE_SIZE + 1}&offset=${page * PAGE_SIZE}`, { signal: controller.signal })
+      .then((batch) => { setPlayers(batch.slice(0, PAGE_SIZE)); setHasNext(batch.length > PAGE_SIZE); })
       .catch((failure: unknown) => { if (!controller.signal.aborted) setError(errorMessage(failure)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -70,7 +72,7 @@ function PlayerPicker({ onBack, onCreate, onChoose }: {
       <div className="pagination">
         <button className="button button-small" disabled={loading || page === 0} onClick={() => setPage(page - 1)}>← Précédent</button>
         <span className="muted">Profils publics · sans connexion</span>
-        <button className="button button-small" disabled={loading || players.length < PAGE_SIZE || Boolean(error)} onClick={() => setPage(page + 1)}>Suivant →</button>
+        <button className="button button-small" disabled={loading || !hasNext || Boolean(error)} onClick={() => setPage(page + 1)}>Suivant →</button>
       </div>
     </div>
     <div className="screen-actions">
@@ -319,6 +321,7 @@ function EncountersList({ catalogs, revision, currentPlayer }: { catalogs: Catal
   const [playersBusy, setPlayersBusy] = useState(false);
   const [playersError, setPlayersError] = useState("");
   const [items, setItems] = useState<Encounter[]>([]);
+  const [hasNext, setHasNext] = useState(false);
   const [authors, setAuthors] = useState<Record<string, Player>>({ [currentPlayer.id]: currentPlayer });
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState(true);
@@ -327,6 +330,7 @@ function EncountersList({ catalogs, revision, currentPlayer }: { catalogs: Catal
   const authorCache = useRef(authors);
   const playerController = useRef<AbortController | null>(null);
   useEffect(() => () => playerController.current?.abort(), []);
+  useEffect(() => { void loadPlayers(); }, []);
   async function loadPlayers() {
     if (playersBusy) return;
     const controller = new AbortController();
@@ -342,18 +346,19 @@ function EncountersList({ catalogs, revision, currentPlayer }: { catalogs: Catal
   useEffect(() => {
     const controller = new AbortController();
     setBusy(true); setError("");
-    const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(page * PAGE_SIZE) });
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE + 1), offset: String(page * PAGE_SIZE) });
     if (filters.player) params.set("player_id", filters.player);
     if (filters.species) params.set("species_id", filters.species);
     if (filters.biome) params.set("biome_id", filters.biome);
     async function load() {
       try {
-        const batch = await request<Encounter[]>(`/encounters?${params}`, { signal: controller.signal });
+        const result = await request<Encounter[]>(`/encounters?${params}`, { signal: controller.signal });
+        const batch = result.slice(0, PAGE_SIZE);
         const unknown = [...new Set(batch.map((item) => item.player_id))].filter((id) => !authorCache.current[id]);
         const profiles = await Promise.all(unknown.map((id) => request<Player>(`/players/${id}`, { signal: controller.signal })));
         if (controller.signal.aborted) return;
         profiles.forEach((profile) => { authorCache.current[profile.id] = profile; });
-        setAuthors({ ...authorCache.current }); setItems(batch);
+        setAuthors({ ...authorCache.current }); setItems(batch); setHasNext(result.length > PAGE_SIZE);
       } catch (failure) { if (!controller.signal.aborted) setError(errorMessage(failure)); }
       finally { if (!controller.signal.aborted) setBusy(false); }
     }
@@ -397,7 +402,7 @@ function EncountersList({ catalogs, revision, currentPlayer }: { catalogs: Catal
           {item.sync_status === "pending" && <p className="pending">Conservée dans MongoDB · synchronisation Redis en attente</p>}
         </article>)}</div>}
       <div className="pagination"><button className="button button-small" disabled={page === 0} onClick={() => setPage(page - 1)}>← Précédent</button>
-        <span>Page {page + 1}</span><button className="button button-small" disabled={items.length < PAGE_SIZE} onClick={() => setPage(page + 1)}>Suivant →</button></div>
+        <span>Page {page + 1}</span><button className="button button-small" disabled={!hasNext} onClick={() => setPage(page + 1)}>Suivant →</button></div>
     </>}
   </section>;
 }
@@ -455,7 +460,7 @@ export default function App() {
         </div>
       </main>}
     </div>
-    <footer className="site-footer"><span>CookieCraft : Explorers <span className="muted">/</span> ENSIIE · Projet NoSQL</span>
-      <span className="footer-right"><a href="/biomes/credits.json" target="_blank" rel="noreferrer">Crédits des captures</a> · <a href="/animals/credits.json" target="_blank" rel="noreferrer">Crédits des animaux</a> · Projet non officiel, non approuvé par Mojang ou Microsoft</span></footer>
+    <footer className="site-footer"><span>CookieCraft</span>
+      <span className="footer-right"><a href="/biomes/credits.json" target="_blank" rel="noreferrer">Crédits des captures</a> · <a href="/animals/credits.json" target="_blank" rel="noreferrer">Crédits des animaux</a></span></footer>
   </div>;
 }
