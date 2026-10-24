@@ -68,6 +68,7 @@ accompagnées de leurs sources, contributeurs et conditions d'utilisation.
 │       ├── catalogs.py
 │       ├── config.py
 │       ├── database.py
+│       ├── demo.py
 │       ├── models.py
 │       ├── resync.py
 │       ├── service.py
@@ -116,6 +117,31 @@ utiliser `--build` après modification des sources.
 
 - Interface web : http://localhost:8080
 - Le backend et les stockages n'ont aucun port publié sur l'hôte.
+
+### Données de démonstration au premier lancement
+
+Par défaut, Docker Compose active `SEED_DEMO_DATA=true`. Sur un journal vide,
+le backend crée **3 explorateurs** (`Demo_Alex`, `Demo_Steve`, `Demo_Luna`) et
+**6 rencontres** réparties entre plusieurs espèces, biomes et types de rencontre.
+Cliquer sur **Continuer**, sélectionner un profil puis ouvrir **Toutes les
+rencontres** pour les parcourir et essayer les filtres. Ces profils sans compte
+Minecraft utilisent le personnage local : aucun fournisseur de skins n'est requis.
+
+Les fixtures suivent le même parcours de validation et de double écriture que
+les formulaires : documents MongoDB, hashes et index Redis. Elles ne remplacent
+pas la démonstration de création d'une nouvelle rencontre par le professeur.
+
+Un journal qui contient déjà des joueurs ou des rencontres n'est pas modifié.
+Un marqueur MongoDB mémorise la fin du chargement : aucun doublon au redémarrage
+et aucune recréation des fixtures supprimées. Si le premier chargement est
+interrompu, les identifiants stables permettent de le reprendre au lancement
+suivant. Les erreurs de stockage font échouer le démarrage, sans annoncer un
+chargement réussi.
+
+Pour démarrer sans fixtures, mettre `SEED_DEMO_DATA=false` dans `.env` **avant
+le premier lancement**. Cela ne supprime pas les données déjà chargées.
+Hors Docker Compose, le chargement est désactivé par défaut ; définir
+`SEED_DEMO_DATA=true` pour l'activer.
 
 ### Personnalisation
 
@@ -508,6 +534,102 @@ pouvoir exécuter ses requêtes une par une, même entre plusieurs invocations d
 Le scénario est rejouable avec ces mêmes valeurs. Les pannes ne sont jamais
 déclenchées automatiquement par les scripts Bruno.
 
+## Ouvrir les deux terminaux de persistance
+
+Ces commandes passent par les conteneurs : aucun client de base de données
+n'est nécessaire sur la machine hôte. Attendre que les services soient sains.
+
+### Terminal 1 : MongoDB
+
+```sh
+docker compose exec mongodb sh -c 'exec mongosh --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin "$MONGO_INITDB_DATABASE"'
+```
+
+Dans `mongosh`, créer puis lire une donnée de démonstration :
+
+```javascript
+db.infrastructure_demo.updateOne(
+  { _id: "persistence-check" },
+  { $set: { message: "Bonjour MongoDB" } },
+  { upsert: true }
+)
+db.infrastructure_demo.findOne({ _id: "persistence-check" })
+```
+
+Vérifier les données métier (profils `Demo_*` créés au premier lancement, puis
+ceux saisis dans le site) :
+
+```javascript
+show collections
+db.players.find({}, { username: 1, created_at: 1 }).sort({ created_at: -1 })
+db.encounters.find({}, { animal_nickname: 1, species_id: 1, "location.biome_id": 1, description: 1 })
+  .sort({ created_at: -1 }).limit(5)
+db.encounters.countDocuments()
+```
+
+Pour retrouver un profil créé dans le site, remplacer le pseudo :
+
+```javascript
+db.players.findOne({ username_normalized: "mon_pseudo" })
+```
+
+### Terminal 2 : Redis
+
+```sh
+docker compose exec redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" exec redis-cli'
+```
+
+Dans `redis-cli` :
+
+```text
+SET infrastructure_demo:persistence-check "Bonjour Redis"
+GET infrastructure_demo:persistence-check
+```
+
+Pour les données métier (démo et saisies du site) :
+
+```text
+ZREVRANGE encounters:recent 0 4
+HGETALL encounter:<identifiant renvoyé par la commande précédente>
+HGETALL players:by_username
+HGETALL player:<identifiant renvoyé par la commande précédente>
+SMEMBERS species:fox:encounters
+SCAN 0 MATCH player:* COUNT 100
+```
+
+La première commande renvoie les identifiants des cinq dernières rencontres, de
+la plus récente à la plus ancienne. Une rencontre créée dans le site apparaît
+donc en tête.
+
+### Vérifier la persistance après recréation
+
+Quitter les clients avec `exit`, attendre au moins une seconde pour la
+synchronisation AOF de Redis, puis :
+
+```sh
+docker compose down
+docker compose up -d --wait
+```
+
+Rouvrir les deux terminaux et relancer **uniquement les lectures** précédentes :
+les valeurs doivent toujours être présentes. Ces écritures manuelles valident
+l'infrastructure ; compléter cette démonstration avec les données créées via
+les formulaires du site.
+
+MongoDB utilise ses fichiers de données ; Redis utilise l'AOF avec synchronisation
+toutes les secondes (une panne brutale peut perdre la dernière seconde
+d'écritures).
+Les volumes nommés survivent à `docker compose down`.
+
+**Attention : `docker compose down -v` supprime les volumes et toutes leurs données.**
+Changer les identifiants MongoDB dans `.env` ne modifie pas les utilisateurs
+déjà initialisés dans un volume existant : il faut les modifier dans MongoDB.
+
+## Prochaines étapes
+
+1. Ajouter vos fichiers audio autorisés au manifeste si vous souhaitez une musique.
+2. Déployer le projet chez un hébergeur.
+
 ## Vérifications locales
 
 Validation de la configuration Docker, sans démarrer les conteneurs :
@@ -576,3 +698,17 @@ La validation complète de l'infrastructure nécessite un moteur Docker actif :
 `docker compose up --build --wait`, puis vérifier l'interface, l'état des quatre
 services et le scénario de persistance décrit plus haut.
 
+### Validation depuis un clone neuf
+
+Parcours vérifié sans fichier `.env` ni volume existant :
+
+1. `docker compose up --build -d --wait` : les quatre services sont `healthy` et
+   le premier lancement crée 3 profils `Demo_*` et 6 rencontres `synced`.
+2. Un profil et une rencontre créés depuis le site sont lus dans `mongosh` et
+   `redis-cli` (Redis confirme `appendonly yes` et `appendfsync everysec`).
+3. Après `docker compose down` (sans `-v`), les volumes restent. Si on recrée
+   seulement `mongodb` et `redis`, **sans le backend**, toutes les données sont
+   encore là : la persistance Redis ne dépend donc pas de la resynchronisation.
+4. Un redémarrage complet ne crée aucun doublon de démonstration.
+5. Tests : `pytest` et `mypy` en local, la pile `compose.test.yaml` avec les
+   vrais MongoDB et Redis, et les tests navigateur Playwright.
