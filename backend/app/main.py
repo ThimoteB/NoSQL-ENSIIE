@@ -11,6 +11,7 @@ from redis.exceptions import RedisError
 
 from app.config import Settings
 from app.database import Document, Storage, connect, initialize_schema
+from app.demo import seed_demo_data
 from app.models import (
     CatalogEntry,
     CatalogId,
@@ -43,10 +44,13 @@ def create_app(storage: Storage | None = None) -> FastAPI:
             application.state.journal = Journal(storage)
             yield
         else:
-            with connect(Settings.from_environment()) as connections:
+            settings = Settings.from_environment()
+            with connect(settings) as connections:
                 initialize_schema(connections.mongo)
                 application.state.journal = Journal(connections)
                 application.state.journal.resync()
+                if settings.seed_demo_data:
+                    seed_demo_data(application.state.journal)
                 logger.info("MongoDB and Redis initialized")
                 yield
 

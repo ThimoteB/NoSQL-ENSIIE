@@ -71,3 +71,28 @@ def test_real_database_lifecycle_validation_and_recovery():
     with TestClient(create_app()) as client:
         assert client.get(f"/players/{player_key}").json() == player
         assert client.get(f"/encounters/{encounter_key}").json() == encounter
+
+
+def test_real_demo_initialization_and_restart(monkeypatch: pytest.MonkeyPatch):
+    database = f"demo_tests_{uuid4().hex}"
+    monkeypatch.setenv("MONGO_DATABASE", database)
+    monkeypatch.setenv("SEED_DEMO_DATA", "true")
+    settings = Settings.from_environment()
+    try:
+        with TestClient(create_app()) as client:
+            players = client.get("/players").json()
+            encounters = client.get("/encounters").json()
+            assert len(players) == 3
+            assert len(encounters) == 6
+            assert all(item["sync_status"] == "synced" for item in players + encounters)
+            with connect(settings) as storage:
+                for item in encounters:
+                    assert storage.redis.hget(
+                        f"encounter:{item['id']}", "animal_nickname"
+                    ) == item["animal_nickname"]
+        with TestClient(create_app()) as client:
+            assert client.get("/players").json() == players
+            assert client.get("/encounters").json() == encounters
+    finally:
+        with connect(settings) as storage:
+            storage.mongo.client.drop_database(database)

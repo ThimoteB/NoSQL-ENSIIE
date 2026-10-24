@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, SecretStr
 
 
 class Settings(BaseModel):
+    seed_demo_data: bool = False
     mongo_host: str = "mongodb"
     mongo_port: int = Field(default=27017, ge=1, le=65535)
     mongo_username: str = "nosql"

@@ -48,7 +48,11 @@ def test_connect_cleans_up_when_a_storage_is_unavailable():
         mongo.return_value.__exit__.assert_called_once()
 
 
-def test_production_lifespan_initializes_and_resyncs(storage: Storage):
+@pytest.mark.parametrize("seed_enabled", [False, True])
+def test_production_lifespan_initializes_and_resyncs(
+    storage: Storage, monkeypatch: pytest.MonkeyPatch, seed_enabled: bool
+):
+    monkeypatch.setenv("SEED_DEMO_DATA", str(seed_enabled))
     events = []
 
     @contextmanager
@@ -61,10 +65,15 @@ def test_production_lifespan_initializes_and_resyncs(storage: Storage):
         patch("app.main.connect", connections),
         patch("app.main.initialize_schema") as initialize,
         patch("app.main.Journal.resync", return_value={}) as resync,
+        patch("app.main.seed_demo_data") as seed,
     ):
         with TestClient(create_app()) as client:
             initialize.assert_called_once_with(storage.mongo)
             resync.assert_called_once()
+            if seed_enabled:
+                seed.assert_called_once_with(client.app.state.journal)
+            else:
+                seed.assert_not_called()
             assert client.get("/players").status_code == 200
         assert events == ["open", "close"]
 
