@@ -85,6 +85,7 @@ accompagnées de leurs sources, contributeurs et conditions d'utilisation.
     ├── playwright.config.ts
     ├── tests/
     ├── scripts/copy-licenses.mjs
+    ├── public/favicon.svg, favicon.ico, apple-touch-icon.png
     ├── public/audio/manifest.json
     ├── public/biomes/
     ├── public/animals/
