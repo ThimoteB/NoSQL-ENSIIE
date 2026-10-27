@@ -334,3 +334,30 @@ def test_openapi_uses_proxy_prefix(client: TestClient):
     assert "/players" in response.json()["paths"]
     assert response.json()["servers"] == [{"url": "/api"}]
     assert client.get("/docs").status_code == 404
+
+
+def test_recent_encounters_are_read_from_redis(client: TestClient, storage: Storage):
+    player = create_player(client)
+    first = client.post("/encounters", json=encounter_payload(player["id"])).json()
+    second = client.post(
+        "/encounters",
+        json=encounter_payload(player["id"], animal_nickname=None, location={"biome_id": "plains"}),
+    ).json()
+    response = client.get("/encounters/recent", params={"limit": 5})
+    assert response.status_code == 200, response.text
+    assert response.headers["X-Data-Source"] == "redis"
+    assert response.json() == [second, first]
+    storage.redis.hset(f"encounter:{first['id']}", "description", "Lu dans Redis")
+    assert client.get("/encounters/recent").json()[1]["description"] == "Lu dans Redis"
+    assert len(client.get("/encounters/recent", params={"limit": 1}).json()) == 1
+    assert client.get("/encounters/recent", params={"limit": 21}).status_code == 422
+
+
+def test_recent_encounters_fall_back_to_mongodb(client: TestClient, storage: Storage):
+    player = create_player(client)
+    encounter = client.post("/encounters", json=encounter_payload(player["id"])).json()
+    with patch.object(storage.redis, "zrevrange", side_effect=ConnectionError("offline")):
+        response = client.get("/encounters/recent")
+    assert response.status_code == 200, response.text
+    assert response.headers["X-Data-Source"] == "mongodb"
+    assert response.json() == [encounter]

@@ -199,6 +199,15 @@ def create_app(storage: Storage | None = None) -> FastAPI:
         )
         return [{**document, "id": document["_id"]} for document in documents]
 
+    @application.get("/encounters/recent", response_model=list[Encounter])
+    def recent_encounters(
+        journal: JournalDependency, response: Response,
+        limit: Annotated[int, Query(ge=1, le=20)] = 5,
+    ) -> list[Document]:
+        documents, source = journal.recent_encounters(limit)
+        response.headers["X-Data-Source"] = source
+        return documents
+
     @application.get("/encounters/{encounter_id}", response_model=Encounter)
     def encounter(encounter_id: UUID, journal: JournalDependency) -> Document:
         return journal.get("encounters", encounter_id)

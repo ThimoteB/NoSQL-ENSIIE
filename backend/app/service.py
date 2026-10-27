@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import cast
 from uuid import UUID, uuid4
 
 from pymongo.errors import DuplicateKeyError
@@ -163,6 +164,40 @@ class Journal:
             "encounters", payload.model_dump(mode="json", exclude_none=True), identifier
         )
         return Encounter.model_validate({**document, "id": document["_id"]})
+
+    def recent_encounters(self, limit: int) -> tuple[list[Document], str]:
+        """Read the latest encounters from the Redis projection, or MongoDB if Redis fails."""
+        try:
+            # The client uses decode_responses=True: members are str.
+            identifiers = cast(
+                list[str], self.storage.redis.zrevrange("encounters:recent", 0, limit - 1)
+            )
+            with self.storage.redis.pipeline(transaction=False) as pipeline:
+                for identifier in identifiers:
+                    pipeline.hgetall(f"encounter:{identifier}")
+                hashes = pipeline.execute()
+        except RedisError:
+            logger.exception("Redis read failed, falling back to MongoDB")
+            documents = (
+                self.storage.mongo.encounters.find()
+                .sort([("created_at", -1), ("_id", 1)]).limit(limit)
+            )
+            return [{**document, "id": document["_id"]} for document in documents], "mongodb"
+        encounters = []
+        for fields in hashes:
+            if not fields:
+                continue
+            location = {"biome_id": fields["biome_id"]}
+            if "location_label" in fields:
+                location["label"] = fields["location_label"]
+            encounter = {
+                key: fields[key]
+                for key in ("id", "player_id", "species_id", "encounter_type",
+                            "description", "created_at", "animal_nickname")
+                if key in fields
+            }
+            encounters.append({**encounter, "location": location, "sync_status": "synced"})
+        return encounters, "redis"
 
     def get(self, collection: str, identifier: UUID) -> Document:
         document = self.storage.mongo[collection].find_one({"_id": str(identifier)})
