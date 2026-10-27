@@ -127,6 +127,10 @@ select { cursor: pointer; color-scheme: dark; }
 .button-menu > span { position: absolute; left: 20px; color: #dce9b5; font-size: .95rem; top: 20px; }
 .menu-caption { font-size: .8rem; color: #becdb4; margin: 24px 0 0; }
 .menu-detail { text-align: center; margin-top: 65px; font-size: .84rem; line-height: 1.2; color: #cec5b6; }
+.recent-encounters { margin: 28px auto 0; max-width: 520px; font-size: .74rem; color: #cec5b6; }
+.recent-encounters .eyebrow { font-size: .62rem; letter-spacing: .18em; margin: 0 0 8px; color: #becdb4; }
+.recent-encounters ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
+.recent-encounters strong { color: #f0d688; font-weight: 400; }
 
 .selection-panel { padding: 22px; }
 .players-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-top: 22px; }

@@ -27,6 +27,27 @@ function Alert({ message, retry }: { message: string; retry?: () => void }) {
   </div>;
 }
 
+function RecentEncounters() {
+  const [items, setItems] = useState<{ encounter: Encounter; species: string }[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      request<Encounter[]>("/encounters/recent?limit=3", { signal: controller.signal }),
+      request<Catalogs["species"]>("/species", { signal: controller.signal }),
+    ]).then(([recent, species]) => setItems(recent.map((encounter) => ({
+      encounter, species: label(species, encounter.species_id),
+    })))).catch(() => setItems([]));
+    return () => controller.abort();
+  }, []);
+  if (!items.length) return null;
+  return <aside className="recent-encounters" aria-label="Dernières rencontres">
+    <p className="eyebrow">DERNIÈRES RENCONTRES · LUES DANS REDIS</p>
+    <ul>{items.map(({ encounter, species }) => <li key={encounter.id}>
+      <strong>{encounter.animal_nickname || species}</strong> · {species}
+    </li>)}</ul>
+  </aside>;
+}
+
 function SectionTitle({ kicker, title, subtitle }: { kicker: string; title: string; subtitle: string }) {
   return <header className="section-title"><p className="eyebrow">{kicker}</p><h1>{title}</h1><p>{subtitle}</p></header>;
 }
@@ -435,6 +456,7 @@ export default function App() {
         </div>
         <p className="menu-caption">Choisis un explorateur ou commence une nouvelle aventure.</p>
         <div className="menu-detail"><span>Un carnet pour les curieux.<br /><strong>Un monde à observer.</strong></span></div>
+        <RecentEncounters />
       </main>}
       {screen === "players" && <PlayerPicker onBack={menu} onCreate={() => setScreen("create")} onChoose={enter} />}
       {screen === "create" && <CreatePlayer onBack={menu} onCreated={enter} />}
