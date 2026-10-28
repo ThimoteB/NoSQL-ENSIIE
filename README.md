@@ -245,6 +245,10 @@ Il n'y a pas encore de modification ni de suppression.
 Les champs facultatifs absents ne sont pas écrits. Aucune clé métier n'expire.
 Redis n'est pas seulement un cache : il conserve les données et leurs index.
 Les lectures filtrées et paginées utilisent MongoDB comme référence.
+`GET /encounters/recent` lit directement Redis (`ZREVRANGE encounters:recent`
+puis `HGETALL encounter:{id}`) : c'est le bandeau « Dernières rencontres » du
+menu. L'en-tête `X-Data-Source` indique `redis`, ou `mongodb` si Redis est
+indisponible et que l'API se replie sur MongoDB.
 
 ## API
 
@@ -261,6 +265,7 @@ Le schéma OpenAPI est disponible à `/api/openapi.json`.
 | `GET` | `/encounter-types` | Lister les types de rencontre |
 | `POST` | `/encounters` | Déclarer une rencontre |
 | `GET` | `/encounters` | Lister et filtrer les rencontres (MongoDB) |
+| `GET` | `/encounters/recent` | Dernières rencontres lues dans Redis (`limit` 1 à 20) |
 | `GET` | `/encounters/{id}` | Lire une rencontre |
 | `GET` | `/health` | Vérifier les deux stockages |
 | `GET` | `/skins/{minecraft_uuid}` | Modèle classic/slim et URL de texture locale |
